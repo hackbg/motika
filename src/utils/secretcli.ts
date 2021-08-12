@@ -17,3 +17,17 @@ export function exportPrivateKey(
     });
   });
 }
+
+// export function importPrivateKey(
+//   keyAlias: string,
+//   privateKey: string
+// ): Promise<boolean> {
+//   return new Promise((resolve, reject) => {
+//     child.exec(
+//       `secretcli keys import ${keyAlias} <(printf '${privateKey}')`,
+//       (error, data, getter) => {
+//         console.log(error, data, getter);
+//       }
+//     );
+//   });
+// }
