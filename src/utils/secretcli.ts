@@ -1,5 +1,11 @@
 import * as child from "child_process";
 
+export async function getKeyAliases(): Promise<Array<string>> {
+  const result = await promisifyExec("secretcli keys list");
+  const keyList = result ? JSON.parse(result) : [];
+  return keyList.map((k: { name: string }) => k.name);
+}
+
 export function generateSendTx(
   fromAlias: string,
   to: string,

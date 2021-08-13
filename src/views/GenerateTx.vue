@@ -1,7 +1,7 @@
 <template>
   <div class="generate-tx">
     <form @submit.prevent="handleSubmit">
-      <input v-model="fromAlias" type="text" placeholder="From name" required />
+      <span>From: <KeySelect @change="handleKeyChange" /></span>
       <input v-model="toAddress" type="text" placeholder="To" required />
       <br />
       <div>
@@ -41,6 +41,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import KeySelect from "@/components/KeySelect.vue";
 import { generateSendTx, generateContractCallTx } from "@/utils/secretcli";
 
 enum TxType {
@@ -49,6 +50,7 @@ enum TxType {
 }
 
 export default defineComponent({
+  components: { KeySelect },
   data() {
     return {
       txType: TxType.Spend,
@@ -61,6 +63,9 @@ export default defineComponent({
     };
   },
   methods: {
+    handleKeyChange(keyAlias: string) {
+      this.fromAlias = keyAlias;
+    },
     async handleSubmit() {
       this.loading = true;
       try {
