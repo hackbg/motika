@@ -43,11 +43,7 @@
 import { defineComponent } from "vue";
 import KeySelect from "@/components/KeySelect.vue";
 import { generateSendTx, generateContractCallTx } from "@/utils/secretcli";
-
-enum TxType {
-  Spend = "spend",
-  ContractCall = "contractCall",
-}
+import { TxType } from "@/types";
 
 export default defineComponent({
   components: { KeySelect },

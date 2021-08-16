@@ -14,8 +14,9 @@ import { getKeyAliases } from "@/utils/secretcli";
 export default defineComponent({
   emits: ["change"],
   data() {
-    const keys: Array<string> = [];
-    return { keys };
+    return {
+      keys: [] as string[],
+    };
   },
   mounted() {
     getKeyAliases().then((result) => {
@@ -24,7 +25,8 @@ export default defineComponent({
   },
   methods: {
     handleChange(event: Event): void {
-      this.$emit("change", (event.target as HTMLSelectElement).value);
+      const select = event.target as HTMLSelectElement;
+      this.$emit("change", select.value);
     },
   },
 });
