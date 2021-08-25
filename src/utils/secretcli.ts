@@ -1,10 +1,5 @@
 import * as child from "child_process";
-
-export async function getKeyAliases(): Promise<string[]> {
-  const result = await promisifyExec("secretcli keys list");
-  const keyList = result ? JSON.parse(result) : [];
-  return keyList.map((k: { name: string }) => k.name);
-}
+import { IKey, IAccountQueryResult } from "@/types";
 
 export function generateSendTx(
   fromAlias: string,
@@ -24,13 +19,37 @@ export async function generateContractCallTx(
 ): Promise<string> {
   await getCertificates();
   const contractHash = await getContractHash(contract);
+  const { address } = await getKey(fromAlias);
+  const { accountNumber, sequence } = await queryAccount(address);
   return promisifyExec(
     `secretcli tx compute execute ${contract} '${message}' ` +
       "--generate-only " +
-      `--from $(secretcli keys show -a ${fromAlias}) ` +
+      `--from ${address} ` +
       `--code-hash ${contractHash} ` +
-      "--enclave-key io-master-cert.der"
+      "--enclave-key io-master-cert.der " +
+      `--sequence ${sequence} ` +
+      `--account-number ${accountNumber}`
   );
+}
+
+export async function getKeyAliases(): Promise<string[]> {
+  const result = await promisifyExec("secretcli keys list");
+  const keyList = result ? JSON.parse(result) : [];
+  return keyList.map((k: IKey) => k.name);
+}
+
+async function getKey(alias: string): Promise<IKey> {
+  const result = await promisifyExec(`secretcli keys show ${alias}`);
+  return JSON.parse(result);
+}
+
+async function queryAccount(account: string): Promise<IAccountQueryResult> {
+  const result = await promisifyExec(`secretcli q account ${account}`);
+  const data = JSON.parse(result);
+  return {
+    accountNumber: data.value.account_number,
+    sequence: data.value.sequence,
+  };
 }
 
 async function getContractHash(contract: string) {
