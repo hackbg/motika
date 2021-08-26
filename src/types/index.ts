@@ -11,6 +11,6 @@ export interface IKey {
 }
 
 export interface IAccountQueryResult {
-  accountNumber: string;
+  accountNumber: number;
   sequence: number;
 }

@@ -2,29 +2,28 @@ import * as child from "child_process";
 import { IKey, IAccountQueryResult } from "@/types";
 
 export function generateSendTx(
-  fromAlias: string,
+  from: string,
   to: string,
   amount: number
 ): Promise<string> {
   return promisifyExec(
-    `secretcli tx send $(secretcli keys show -a ${fromAlias}) ` +
-      `${to} ${amount}usrct --generate-only`
+    `secretcli tx send ${from} ${to} ${amount}usrct --generate-only`
   );
 }
 
 export async function generateContractCallTx(
-  fromAlias: string,
+  from: string,
   contract: string,
+  contractHash: string,
+  sequence: number,
+  accountNumber: number,
   message: string
 ): Promise<string> {
   await getCertificates();
-  const contractHash = await getContractHash(contract);
-  const { address } = await getKey(fromAlias);
-  const { accountNumber, sequence } = await queryAccount(address);
   return promisifyExec(
     `secretcli tx compute execute ${contract} '${message}' ` +
       "--generate-only " +
-      `--from ${address} ` +
+      `--from ${from} ` +
       `--code-hash ${contractHash} ` +
       "--enclave-key io-master-cert.der " +
       `--sequence ${sequence} ` +
@@ -38,12 +37,14 @@ export async function getKeyAliases(): Promise<string[]> {
   return keyList.map((k: IKey) => k.name);
 }
 
-async function getKey(alias: string): Promise<IKey> {
+export async function getKey(alias: string): Promise<IKey> {
   const result = await promisifyExec(`secretcli keys show ${alias}`);
   return JSON.parse(result);
 }
 
-async function queryAccount(account: string): Promise<IAccountQueryResult> {
+export async function queryAccount(
+  account: string
+): Promise<IAccountQueryResult> {
   const result = await promisifyExec(`secretcli q account ${account}`);
   const data = JSON.parse(result);
   return {
@@ -52,7 +53,7 @@ async function queryAccount(account: string): Promise<IAccountQueryResult> {
   };
 }
 
-async function getContractHash(contract: string) {
+export async function getContractHash(contract: string): Promise<string> {
   const result = await promisifyExec(
     `secretcli q compute contract-hash ${contract}`
   );
