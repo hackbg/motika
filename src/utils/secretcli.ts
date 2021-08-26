@@ -31,10 +31,9 @@ export async function generateContractCallTx(
   );
 }
 
-export async function getKeyAliases(): Promise<string[]> {
+export async function getKeys(): Promise<IKey[]> {
   const result = await promisifyExec("secretcli keys list");
-  const keyList = result ? JSON.parse(result) : [];
-  return keyList.map((k: IKey) => k.name);
+  return JSON.parse(result);
 }
 
 export async function getKey(alias: string): Promise<IKey> {

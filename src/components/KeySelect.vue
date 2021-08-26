@@ -9,7 +9,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { getKeyAliases } from "@/utils/secretcli";
+import { getKeys } from "@/utils/secretcli";
 
 export default defineComponent({
   emits: ["change"],
@@ -19,8 +19,8 @@ export default defineComponent({
     };
   },
   mounted() {
-    getKeyAliases().then((result) => {
-      this.keys = result;
+    getKeys().then((result) => {
+      this.keys = result.map((k) => k.name);
     });
   },
   methods: {
