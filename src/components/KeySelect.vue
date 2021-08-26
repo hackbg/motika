@@ -8,25 +8,25 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, onMounted, ref } from "vue";
 import { getKeys } from "@/utils/secretcli";
 import { IKey } from "@/types";
 
 export default defineComponent({
   emits: ["change"],
-  data: () => ({
-    keys: [] as IKey[],
-  }),
-  mounted() {
-    getKeys().then((result) => {
-      this.keys = result;
+  setup(_, { emit }) {
+    const keys = ref<IKey[]>([]);
+
+    onMounted(async () => {
+      keys.value = await getKeys();
     });
-  },
-  methods: {
-    handleChange(event: Event): void {
+
+    function handleChange(event: Event): void {
       const select = event.target as HTMLSelectElement;
-      this.$emit("change", select.value);
-    },
+      emit("change", select.value);
+    }
+
+    return { keys, handleChange };
   },
 });
 </script>
