@@ -1,58 +1,71 @@
 <template>
   <div class="generate-tx">
     <form @submit.prevent="handleSubmit">
-      <span>From: <KeySelect @change="handleKeyChange" /></span>
-      <input v-model="toAddress" type="text" placeholder="To" required />
+      <span>From: <KeySelect @change="handleSenderChange" /></span>
+      <input
+        v-model="state.form.recipientAddress"
+        type="text"
+        placeholder="To"
+        required
+      />
       <br />
       <div>
         <label>
-          <input v-model="txType" type="radio" value="spend" />
+          <input v-model="state.form.txType" type="radio" value="spend" />
           Spend
         </label>
         <label>
-          <input v-model="txType" type="radio" value="contractCall" />
+          <input
+            v-model="state.form.txType"
+            type="radio"
+            value="contractCall"
+          />
           Contract Call
         </label>
       </div>
       <br />
-      <div v-if="txType === 'spend'">
+      <div v-if="state.form.txType === 'spend'">
         <input
-          v-model="amount"
+          v-model="state.form.amount"
           type="text"
           placeholder="Amount"
           required
         />usrct
       </div>
-      <div v-else-if="txType === 'contractCall'">
+      <div v-else-if="state.form.txType === 'contractCall'">
         <label for="sequence">Sequence #</label>
         <input
           id="sequence"
           type="number"
-          v-model="sequence"
-          :disabled="loading"
+          v-model="state.form.sequence"
+          :disabled="state.loading"
           required
         />
         <br />
         <textarea
-          v-model="message"
+          v-model="state.form.message"
           cols="40"
           rows="5"
           placeholder="Message"
           required
         ></textarea>
       </div>
-      <button type="submit" :disabled="loading">Generate</button>
+      <button type="submit" :disabled="state.loading">Generate</button>
     </form>
     <br />
-    <textarea v-if="output" v-model="output" cols="40" rows="20"></textarea>
+    <textarea
+      v-if="state.output"
+      v-model="state.output"
+      cols="40"
+      rows="20"
+    ></textarea>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, reactive, watch } from "vue";
 import KeySelect from "@/components/KeySelect.vue";
 import {
-  getKey,
   queryAccount,
   getContractHash,
   generateSendTx,
@@ -62,66 +75,76 @@ import { TxType } from "@/types";
 
 export default defineComponent({
   components: { KeySelect },
-  data() {
-    return {
-      txType: TxType.Spend,
-      fromAlias: "",
-      fromAddress: "",
-      toAddress: "",
-      amount: "",
-      message: "",
-      sequence: 0,
-      accountNumber: 0,
+  setup() {
+    const state = reactive({
+      form: {
+        txType: TxType.Spend,
+        senderAddress: "",
+        recipientAddress: "",
+        amount: 0,
+        message: "",
+        sequence: 0,
+      },
       output: "",
       loading: false,
-    };
-  },
-  watch: {
-    async fromAlias(newValue: string) {
-      this.loading = true;
-      try {
-        const { address } = await getKey(newValue);
-        this.fromAddress = address;
-        const { accountNumber, sequence } = await queryAccount(address);
-        this.accountNumber = accountNumber;
-        this.sequence = sequence;
-      } catch (error) {
-        alert(error.message || "Error");
-      }
-      this.loading = false;
-    },
-  },
-  methods: {
-    handleKeyChange(keyAlias: string) {
-      this.fromAlias = keyAlias;
-    },
-    async handleSubmit() {
-      this.loading = true;
-      try {
-        let result = "";
-        if (this.txType === TxType.Spend) {
-          result = await generateSendTx(
-            this.fromAddress,
-            this.toAddress,
-            +this.amount
-          );
-        } else if (this.txType === TxType.ContractCall) {
-          const contractHash = await getContractHash(this.toAddress);
-          result = await generateContractCallTx(
-            this.fromAddress,
-            this.toAddress,
-            contractHash,
-            this.sequence,
-            this.accountNumber,
-            this.message
-          );
+    });
+
+    watch(
+      () => state.form.senderAddress,
+      async (newValue) => {
+        if (state.form.txType !== TxType.ContractCall) return;
+        state.loading = true;
+        try {
+          const { sequence } = await queryAccount(newValue);
+          state.form.sequence = sequence;
+        } catch (error) {
+          alert(error.message || "Error");
         }
-        this.output = result;
+        state.loading = false;
+      }
+    );
+
+    // TODO: use v-model
+    function handleSenderChange(value: string) {
+      state.form.senderAddress = value;
+    }
+
+    async function handleSubmit() {
+      state.loading = true;
+      try {
+        switch (state.form.txType) {
+          case TxType.Spend: {
+            state.output = await generateSendTx(
+              state.form.senderAddress,
+              state.form.recipientAddress,
+              state.form.amount
+            );
+            break;
+          }
+          case TxType.ContractCall: {
+            const [contractHash, { accountNumber }] = await Promise.all([
+              getContractHash(state.form.recipientAddress),
+              queryAccount(state.form.senderAddress),
+            ]);
+            state.output = await generateContractCallTx(
+              state.form.senderAddress,
+              state.form.recipientAddress,
+              contractHash,
+              state.form.sequence,
+              accountNumber,
+              state.form.message
+            );
+            break;
+          }
+        }
       } catch (error) {
         alert(error.message || "Error");
+      } finally {
+        state.loading = false;
       }
-      this.loading = false;
-    },
+    }
+
+    return { state, handleSenderChange, handleSubmit };
   },
 });
 </script>

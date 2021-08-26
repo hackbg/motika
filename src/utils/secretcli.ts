@@ -2,17 +2,17 @@ import * as child from "child_process";
 import { IKey, IAccountQueryResult } from "@/types";
 
 export function generateSendTx(
-  from: string,
-  to: string,
+  sender: string,
+  recipient: string,
   amount: number
 ): Promise<string> {
   return promisifyExec(
-    `secretcli tx send ${from} ${to} ${amount}usrct --generate-only`
+    `secretcli tx send ${sender} ${recipient} ${amount}usrct --generate-only`
   );
 }
 
 export async function generateContractCallTx(
-  from: string,
+  sender: string,
   contract: string,
   contractHash: string,
   sequence: number,
@@ -23,7 +23,7 @@ export async function generateContractCallTx(
   return promisifyExec(
     `secretcli tx compute execute ${contract} '${message}' ` +
       "--generate-only " +
-      `--from ${from} ` +
+      `--from ${sender} ` +
       `--code-hash ${contractHash} ` +
       "--enclave-key io-master-cert.der " +
       `--sequence ${sequence} ` +
