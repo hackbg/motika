@@ -34,26 +34,17 @@
 import { defineComponent } from "vue";
 import * as child from "child_process";
 
-type SecretConfig = {
-  chainId?: string;
-  indent?: boolean;
-  keyringBackend?: string;
-  node?: string;
-  output?: string;
-  trustNode?: string;
-};
-
 export default defineComponent({
   name: "SystemInfo",
-  data(): { [key: string]: SecretConfig } {
+  data() {
     return {
       config: {
-        chainId: undefined,
-        indent: undefined,
-        keyringBackend: undefined,
-        node: undefined,
-        output: undefined,
-        trustNode: undefined,
+        chainId: "",
+        indent: false,
+        keyringBackend: "",
+        node: "",
+        output: "",
+        trustNode: "",
       },
     };
   },
@@ -85,12 +76,7 @@ export default defineComponent({
           });
           return {
             chainId: results["chain-id"],
-            indent:
-              results.indent === "true"
-                ? true
-                : results.indent === "false"
-                ? false
-                : undefined,
+            indent: results.indent === "true",
             keyringBackend: results["keyring-backend"],
             node: results.node,
             output: results.output,
