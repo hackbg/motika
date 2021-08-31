@@ -32,7 +32,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import * as child from "child_process";
 
 export default defineComponent({
   name: "SystemInfo",
@@ -53,7 +52,8 @@ export default defineComponent({
   },
   methods: {
     secretConfig() {
-      child.exec("secretcli config", (error, data, getter) => {
+      // TODO: extract util
+      window.childProcess.exec("secretcli config", (error, data, getter) => {
         if (error) {
           console.log("error", error.message);
           return;

@@ -1,4 +1,3 @@
-import * as child from "child_process";
 import { IKey, IAccountQueryResult } from "@/types";
 
 export function generateSendTx(
@@ -65,7 +64,7 @@ function getCertificates(): Promise<string> {
 
 function promisifyExec(command: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    child.exec(command, (error, data) => {
+    window.childProcess.exec(command, (error, data) => {
       if (error) reject(error);
       resolve(data);
     });
