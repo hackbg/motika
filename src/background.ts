@@ -1,6 +1,7 @@
 "use strict";
 
 import path from "path";
+import { app, protocol, BrowserWindow, ipcMain } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
 const isDevelopment = process.env.NODE_ENV !== "production";
@@ -64,6 +65,13 @@ app.on("ready", async () => {
     }
   }
   createWindow();
+});
+
+ipcMain.on("ondragstart", (event, filePath) => {
+  event.sender.startDrag({
+    file: filePath,
+    icon: "src/assets/icons/drag.png",
+  });
 });
 
 // Exit cleanly on request from parent process in development mode.
