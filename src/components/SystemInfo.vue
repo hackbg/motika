@@ -31,61 +31,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, onMounted, ref } from "vue";
+import { getConfig } from "@/utils/secretcli";
+import { Config } from "@/types";
 
 export default defineComponent({
-  name: "SystemInfo",
-  data() {
-    return {
-      config: {
-        chainId: "",
-        indent: false,
-        keyringBackend: "",
-        node: "",
-        output: "",
-        trustNode: "",
-      },
-    };
-  },
-  mounted() {
-    this.secretConfig();
-  },
-  methods: {
-    secretConfig() {
-      // TODO: extract util
-      window.childProcess.exec("secretcli config", (error, data, getter) => {
-        if (error) {
-          console.log("error", error.message);
-          return;
-        }
-        if (getter) {
-          console.log("data", data);
-          return;
-        }
-        const processResult = (stdout: string) => {
-          const lines = stdout.toString().split("\n");
-          const results: { [key: string]: string } = {};
-          lines.forEach((line) => {
-            const parts = line
-              .split("=")
-              .map((x) => x.replace(/\s/g, "").replace(/"/g, ""));
-            if (parts[0].length > 0) {
-              const key: string = parts[0];
-              results[key] = parts[1];
-            }
-          });
-          return {
-            chainId: results["chain-id"],
-            indent: results.indent === "true",
-            keyringBackend: results["keyring-backend"],
-            node: results.node,
-            output: results.output,
-            trustNode: results["trust-node"],
-          };
-        };
-        this.config = processResult(data);
-      });
-    },
+  setup() {
+    const config = ref<Config>({});
+    onMounted(async () => (config.value = await getConfig()));
+    return { config };
   },
 });
 </script>

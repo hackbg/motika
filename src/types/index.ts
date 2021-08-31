@@ -14,3 +14,12 @@ export interface IAccountQueryResult {
   accountNumber: number;
   sequence: number;
 }
+
+export interface Config {
+  chainId?: string;
+  indent?: boolean;
+  keyringBackend?: string;
+  node?: string;
+  output?: string;
+  trustNode?: boolean;
+}
