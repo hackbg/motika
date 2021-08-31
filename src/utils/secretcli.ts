@@ -62,16 +62,18 @@ function getCertificates(): Promise<string> {
   return promisifyExec("secretcli query register secret-network-params");
 }
 
-export async function getConfig(): Promise<Config> {
+export async function getConfig(
+  keys: string[] = [
+    "chain-id",
+    "indent",
+    "keyring-backend",
+    "node",
+    "output",
+    "trust-node",
+  ]
+): Promise<Config> {
   const result = await Promise.all(
-    [
-      "chain-id",
-      "indent",
-      "keyring-backend",
-      "node",
-      "output",
-      "trust-node",
-    ].map(async (key) => {
+    keys.map(async (key) => {
       const value = await promisifyExec(`secretcli config ${key} --get`);
       return value.replace(/\n/, "");
     })
