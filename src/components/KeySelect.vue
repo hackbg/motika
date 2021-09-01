@@ -13,17 +13,17 @@ import { getKeys } from "@/utils/secretcli";
 import { IKey } from "@/types";
 
 export default defineComponent({
-  emits: ["change"],
+  emits: ["update:address", "update:alias"],
+  props: { address: String },
   setup(_, { emit }) {
     const keys = ref<IKey[]>([]);
 
-    onMounted(async () => {
-      keys.value = await getKeys();
-    });
+    onMounted(async () => (keys.value = await getKeys()));
 
     function handleChange(event: Event): void {
       const select = event.target as HTMLSelectElement;
-      emit("change", select.value);
+      emit("update:address", select.value);
+      emit("update:alias", select.options[select.selectedIndex].innerHTML);
     }
 
     return { keys, handleChange };

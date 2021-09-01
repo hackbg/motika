@@ -1,5 +1,4 @@
-import * as child from "child_process";
-import { IKey, IAccountQueryResult } from "@/types";
+import { IKey, IAccountQueryResult, Config } from "@/types";
 
 export function generateSendTx(
   sender: string,
@@ -63,9 +62,35 @@ function getCertificates(): Promise<string> {
   return promisifyExec("secretcli query register secret-network-params");
 }
 
+export async function getConfig(
+  keys: string[] = [
+    "chain-id",
+    "indent",
+    "keyring-backend",
+    "node",
+    "output",
+    "trust-node",
+  ]
+): Promise<Config> {
+  const result = await Promise.all(
+    keys.map(async (key) => {
+      const value = await promisifyExec(`secretcli config ${key} --get`);
+      return value.replace(/\n/, "");
+    })
+  );
+  return {
+    chainId: result[0],
+    indent: result[1] ? result[1] === "true" : undefined,
+    keyringBackend: result[2],
+    node: result[3],
+    output: result[4],
+    trustNode: result[5] ? result[5] === "true" : undefined,
+  };
+}
+
 function promisifyExec(command: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    child.exec(command, (error, data) => {
+    window.childProcess.exec(command, (error, data) => {
       if (error) reject(error);
       resolve(data);
     });

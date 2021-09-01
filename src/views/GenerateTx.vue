@@ -1,7 +1,13 @@
 <template>
   <div class="generate-tx">
     <form @submit.prevent="handleSubmit">
-      <span>From: <KeySelect @change="handleSenderChange" /></span>
+      <span>
+        From:
+        <KeySelect
+          v-model:address="state.form.senderAddress"
+          v-model:alias="state.form.senderAlias"
+        />
+      </span>
       <input
         v-model="state.form.recipientAddress"
         type="text"
@@ -53,19 +59,17 @@
       <button type="submit" :disabled="state.loading">Generate</button>
     </form>
     <br />
-    <textarea
-      v-if="state.output"
-      v-model="state.output"
-      cols="40"
-      rows="20"
-    ></textarea>
+    <div ref="dragRef" draggable="true" :class="{ hidden: !state.output }">
+      {{ state.fileName }}
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, watch } from "vue";
+import { defineComponent, ref, reactive, watch } from "vue";
 import KeySelect from "@/components/KeySelect.vue";
 import {
+  getConfig,
   queryAccount,
   getContractHash,
   generateSendTx,
@@ -79,6 +83,7 @@ export default defineComponent({
     const state = reactive({
       form: {
         txType: TxType.Spend,
+        senderAlias: "",
         senderAddress: "",
         recipientAddress: "",
         amount: 0,
@@ -86,8 +91,10 @@ export default defineComponent({
         sequence: 0,
       },
       output: "",
+      fileName: "",
       loading: false,
     });
+    const dragRef = ref<null | { ondragstart: (e: DragEvent) => void }>(null);
 
     watch(
       () => state.form.senderAddress,
@@ -104,39 +111,13 @@ export default defineComponent({
       }
     );
 
-    // TODO: use v-model
-    function handleSenderChange(value: string) {
-      state.form.senderAddress = value;
-    }
-
     async function handleSubmit() {
       state.loading = true;
       try {
-        switch (state.form.txType) {
-          case TxType.Spend: {
-            state.output = await generateSendTx(
-              state.form.senderAddress,
-              state.form.recipientAddress,
-              state.form.amount
-            );
-            break;
-          }
-          case TxType.ContractCall: {
-            const [contractHash, { accountNumber }] = await Promise.all([
-              getContractHash(state.form.recipientAddress),
-              queryAccount(state.form.senderAddress),
-            ]);
-            state.output = await generateContractCallTx(
-              state.form.senderAddress,
-              state.form.recipientAddress,
-              contractHash,
-              state.form.sequence,
-              accountNumber,
-              state.form.message
-            );
-            break;
-          }
-        }
+        state.output = await generateTx();
+        state.fileName = await generateFilename();
+        saveOutputToFile();
+        enableFileDrag();
       } catch (error) {
         alert(error.message || "Error");
       } finally {
@@ -144,7 +125,61 @@ export default defineComponent({
       }
     }
 
-    return { state, handleSenderChange, handleSubmit };
+    async function generateTx() {
+      switch (state.form.txType) {
+        case TxType.Spend: {
+          const result = await generateSendTx(
+            state.form.senderAddress,
+            state.form.recipientAddress,
+            state.form.amount
+          );
+          return result;
+        }
+        case TxType.ContractCall: {
+          const [contractHash, { accountNumber }] = await Promise.all([
+            getContractHash(state.form.recipientAddress),
+            queryAccount(state.form.senderAddress),
+          ]);
+          const result = await generateContractCallTx(
+            state.form.senderAddress,
+            state.form.recipientAddress,
+            contractHash,
+            state.form.sequence,
+            accountNumber,
+            state.form.message
+          );
+          return result;
+        }
+      }
+    }
+
+    async function generateFilename() {
+      const { chainId } = await getConfig(["chain-id"]);
+      return `${state.form.senderAlias}-${chainId}-seq-${state.form.sequence}-tx.json`;
+    }
+
+    function saveOutputToFile() {
+      window.fs.writeFileSync(state.fileName, state.output);
+    }
+
+    function enableFileDrag() {
+      if (dragRef.value) {
+        dragRef.value.ondragstart = (event: DragEvent) => {
+          event.preventDefault();
+          window.electron.startDrag(state.fileName);
+        };
+      }
+    }
+
+    return { state, dragRef, handleSubmit };
   },
 });
 </script>
+
+<style lang="scss" scoped>
+.generate-tx {
+  .hidden {
+    visibility: hidden;
+  }
+}
+</style>

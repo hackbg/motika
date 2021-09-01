@@ -1,8 +1,7 @@
 module.exports = {
   pluginOptions: {
     electronBuilder: {
-      nodeIntegration: true,
-      externals: ["child_process"],
+      preload: { preload: "src/preload.ts" },
     },
   },
 };
