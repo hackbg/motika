@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Home from "../views/Home.vue";
 import GenerateTx from "../views/GenerateTx.vue";
+import SignTx from "../views/SignTx.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -12,6 +13,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/generate",
     name: "Generate Tx",
     component: GenerateTx,
+  },
+  {
+    path: "/sign",
+    name: "Sign Tx",
+    component: SignTx,
   },
 ];
 
