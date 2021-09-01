@@ -14,7 +14,9 @@ contextBridge.exposeInMainWorld("electron", {
 declare global {
   interface Window {
     fs: typeof fs;
-    childProcess: typeof childProcess;
+    childProcess: { exec: Function };
     electron: { startDrag: (fileName: string) => void };
   }
 }
+
+console.info('preload.ts complete');
