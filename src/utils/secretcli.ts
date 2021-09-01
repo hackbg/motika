@@ -30,6 +30,23 @@ export async function generateContractCallTx(
   );
 }
 
+export async function signMultisigTx(
+  sender: string,
+  signerAlias: string,
+  sequence: number,
+  accountNumber: number,
+  unsignedTxPath: string
+): Promise<string> {
+  return promisifyExec(
+    `secretcli tx sign ${unsignedTxPath} ` +
+      `--multisig=${sender} ` +
+      "--offline " +
+      `--account-number=${accountNumber} ` +
+      `--sequence=${sequence} ` +
+      `--from=${signerAlias}`
+  );
+}
+
 export async function getKeys(): Promise<IKey[]> {
   const result = await promisifyExec("secretcli keys list");
   return JSON.parse(result);
